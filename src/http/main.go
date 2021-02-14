@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"runtime"
 	"strconv"
+	"sync"
 
 	"github.com/cvkem/crfractal/fractal"
 )
@@ -37,23 +39,30 @@ func main() {
 		Addr:    ":8080",
 		Handler: mux,
 	}
+	log.Println("Starting fractal-http: go to localhost:8080 ")
 	s.ListenAndServe()
 }
+
+var once sync.Once
 
 func MandelbrotHandler(res http.ResponseWriter, req *http.Request) {
 	var data bytes.Buffer
 
+	// take the hostRequest of the first call to spin up worker tasks
+	setHostUrl := func() {
+		if req.TLS == nil {
+			fractal.HostUrl = "http://" + req.Host
+		} else {
+			fractal.HostUrl = "https://" + req.Host
+		}
+		log.Println("Set host-url for remote workers to: ", fractal.HostUrl)
+	}
+	once.Do(setHostUrl)
+
 	params := req.URL.Query()
 	numWorker := getParam(params, "numWorker")
 
-	var baseUrl string
-	if req.TLS == nil {
-		baseUrl = "http://" + req.Host
-	} else {
-		baseUrl = "https://" + req.Host
-	}
-
-	fractal.Mandelbrot(&data, int(numWorker), baseUrl)
+	fractal.Mandelbrot(&data, int(numWorker))
 
 	res.WriteHeader(200)
 	res.Header().Add("Content-Type", "image/png")

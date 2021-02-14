@@ -86,7 +86,9 @@ func addLineToImage(img *image.RGBA, y int, rgb []int64) {
 	}
 }
 
-func Render(img *image.RGBA, imgWidth, imgHeight int, numWorker int, host string) {
+var HostUrl string
+
+func Render(img *image.RGBA, imgWidth, imgHeight int, numWorker int) {
 	if profileCpu {
 		f, err := os.Create("profile.prof")
 		if err != nil {
@@ -94,6 +96,9 @@ func Render(img *image.RGBA, imgWidth, imgHeight int, numWorker int, host string
 		}
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
+	}
+	if HostUrl == "" && RemoteWorkers {
+		panic("HostUrl not set while remote workers are expected")
 	}
 
 	jobs := make(chan int)
@@ -107,7 +112,7 @@ func Render(img *image.RGBA, imgWidth, imgHeight int, numWorker int, host string
 			for y := range jobs {
 				var rgb []int64
 				if RemoteWorkers {
-					requestUrl := fmt.Sprintf("%s/GetFractalLine?y=%d&imgWidth=%d&imgHeight=%d", host, y, imgWidth, imgHeight)
+					requestUrl := fmt.Sprintf("%s/GetFractalLine?y=%d&imgWidth=%d&imgHeight=%d", HostUrl, y, imgWidth, imgHeight)
 					resp, err := http.Get(requestUrl)
 					if err != nil {
 						panic(err)

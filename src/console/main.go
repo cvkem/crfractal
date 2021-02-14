@@ -27,5 +27,5 @@ func main() {
 	defer f.Close()
 
 	fractal.RemoteWorkers = false
-	fractal.Mandelbrot(f, numWorkers, "no host-url needed")
+	fractal.Mandelbrot(f, numWorkers)
 }

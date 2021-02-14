@@ -18,14 +18,13 @@ const (
 	textY = 20
 )
 
-func Mandelbrot(w io.Writer, numWorker int, host string) {
-	log.Println("Currently running on host: ", host)
+func Mandelbrot(w io.Writer, numWorker int) {
 	log.Println("Allocating image...")
 	img := image.NewRGBA(image.Rect(0, 0, imgWidth, imgHeight))
 
 	log.Println("Rendering...")
 	start := time.Now()
-	Render(img, imgWidth, imgHeight, numWorker, host)
+	Render(img, imgWidth, imgHeight, numWorker)
 	end := time.Now()
 
 	log.Println("Done rendering in", end.Sub(start))
