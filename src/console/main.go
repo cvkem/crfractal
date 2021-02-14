@@ -7,8 +7,6 @@ import (
 	"github.com/cvkem/crfractal/fractal"
 )
 
-var numWorkers int = runtime.NumCPU()
-
 // duplicates
 const (
 	imgWidth  = 1024
@@ -19,6 +17,8 @@ const (
 	textY = 200
 )
 
+var numWorker int = runtime.NumCPU() * 2
+
 func main() {
 	f, err := os.Create("result.png")
 	if err != nil {
@@ -27,5 +27,5 @@ func main() {
 	defer f.Close()
 
 	fractal.RemoteWorkers = false
-	fractal.Mandelbrot(f, numWorkers)
+	fractal.Mandelbrot(f, numWorker)
 }

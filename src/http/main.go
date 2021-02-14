@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"strconv"
 	"sync"
@@ -25,7 +26,12 @@ const (
 	textY = 200
 )
 
+var port = 8080
+
+var defNumWorker = runtime.NumCPU() * 2
+
 func main() {
+	initParams()
 
 	//Create the default mux
 	mux := http.NewServeMux()
@@ -35,15 +41,32 @@ func main() {
 	mux.HandleFunc("/GetFractalLine", MandelbrotLineHandler)
 
 	//Create the server.
+	portStr := fmt.Sprintf(":%d", port)
 	s := &http.Server{
-		Addr:    ":8080",
+		Addr:    portStr,
 		Handler: mux,
 	}
-	log.Println("Starting fractal-http: go to localhost:8080 ")
+	log.Println("Starting fractal-http: go to localhost" + portStr)
 	s.ListenAndServe()
 }
 
 var once sync.Once
+
+func initParams() {
+	var err error
+	nw := os.Getenv("numWorker")
+	if nw != "" {
+		if defNumWorker, err = strconv.Atoi(nw); err != nil {
+			panic(err)
+		}
+	}
+	p := os.Getenv("port")
+	if p != "" {
+		if port, err = strconv.Atoi(p); err != nil {
+			panic(err)
+		}
+	}
+}
 
 func MandelbrotHandler(res http.ResponseWriter, req *http.Request) {
 	var data bytes.Buffer
@@ -60,7 +83,7 @@ func MandelbrotHandler(res http.ResponseWriter, req *http.Request) {
 	once.Do(setHostUrl)
 
 	params := req.URL.Query()
-	numWorker := getParam(params, "numWorker")
+	numWorker := getParamOptInt(params, "numWorker", int64(defNumWorker))
 
 	fractal.Mandelbrot(&data, int(numWorker))
 
@@ -97,5 +120,20 @@ func getParam(params url.Values, key string) int64 {
 	}
 
 	return i
+}
 
+func getParamOptInt(params url.Values, key string, defVal int64) int64 {
+	strVal, present := params[key] //filters=["color", "price", "brand"]
+	if present {
+		if len(strVal) == 1 {
+			i, err := strconv.ParseInt(strVal[0], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			return i
+		} else {
+			panic(fmt.Sprintf("Key '%s' is prensen but has %d values", key, len(strVal)))
+		}
+	}
+	return defVal
 }
