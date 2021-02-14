@@ -32,7 +32,7 @@ const (
 	profileCpu   = false
 )
 
-const remoteWorkers = true
+var RemoteWorkers = true
 
 //type RGB struct{ r, g, b int }
 
@@ -106,7 +106,7 @@ func Render(img *image.RGBA, imgWidth, imgHeight int, numWorker int, host string
 			defer wg.Done()
 			for y := range jobs {
 				var rgb []int64
-				if remoteWorkers {
+				if RemoteWorkers {
 					requestUrl := fmt.Sprintf("%s/GetFractalLine?y=%d&imgWidth=%d&imgHeight=%d", host, y, imgWidth, imgHeight)
 					resp, err := http.Get(requestUrl)
 					if err != nil {
