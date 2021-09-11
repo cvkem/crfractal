@@ -36,6 +36,8 @@ func main() {
 	//Create the default mux
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/", homeHandler)
+
 	mux.HandleFunc("/GetFractal", MandelbrotHandler)
 
 	mux.HandleFunc("/GetFractalLine", MandelbrotLineHandler)
@@ -68,10 +70,25 @@ func initParams() {
 	}
 }
 
+const homePage = `<html>
+  <head/>
+  <body>
+  Usage: https://&lt;host&gt;/GetFractal[?numWorker=10]
+  </body>
+</html>`
+
+func homeHandler(res http.ResponseWriter, req *http.Request) {
+
+	res.WriteHeader(200)
+	res.Header().Add("Content-Type", "html")
+	res.Write([]byte(homePage))
+}
+
 func MandelbrotHandler(res http.ResponseWriter, req *http.Request) {
 	var data bytes.Buffer
 
 	// take the hostRequest of the first call to spin up worker tasks
+	// only needed for this call
 	setHostUrl := func() {
 		if req.TLS == nil {
 			fractal.HostUrl = "http://" + req.Host
@@ -132,7 +149,7 @@ func getParamOptInt(params url.Values, key string, defVal int64) int64 {
 			}
 			return i
 		} else {
-			panic(fmt.Sprintf("Key '%s' is prensen but has %d values", key, len(strVal)))
+			panic(fmt.Sprintf("Key '%s' is present but has %d values", key, len(strVal)))
 		}
 	}
 	return defVal
